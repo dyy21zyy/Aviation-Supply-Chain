@@ -6,6 +6,24 @@ import pandas as pd
 from scipy.stats import beta
 
 
+PROJECT_DIRNAME = "aviation_sideinfo_case"
+
+
+def project_root() -> Path:
+    """Return project root path (.../aviation_sideinfo_case)."""
+    return Path(__file__).resolve().parents[1]
+
+
+def ensure_directories() -> Tuple[Path, Path, Path]:
+    """Ensure project, data, and outputs directories exist and return them."""
+    root = project_root()
+    data_dir = root / "data"
+    outputs_dir = root / "outputs"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    outputs_dir.mkdir(parents=True, exist_ok=True)
+    return root, data_dir, outputs_dir
+
+
 def load_csv(path: Union[str, Path]) -> pd.DataFrame:
     """Load a CSV file with basic path validation."""
     file_path = Path(path)
@@ -35,16 +53,13 @@ def beta_prior_ci(a: float, b: float, alpha: float = 0.05) -> Tuple[float, float
 
 
 def scaled_beta_pdf(x_0_100: float, a: float, b: float) -> float:
-    """
-    Evaluate a Beta(a, b) density over x in [0, 100] using z=x/100.
-
-    Transformation: f_X(x) = f_Z(x/100) * (1/100)
-    where Z ~ Beta(a, b).
-    """
+    """Evaluate a Beta(a, b) density on x in [0,100] after scaling by z=x/100."""
     if a <= 0 or b <= 0:
         raise ValueError("Beta parameters a and b must be positive.")
     if not np.isfinite(x_0_100):
         raise ValueError("x_0_100 must be finite.")
+    if x_0_100 < 0 or x_0_100 > 100:
+        raise ValueError("x_0_100 must lie within [0, 100].")
 
     z = np.clip(x_0_100 / 100.0, 1e-6, 1 - 1e-6)
     return beta.pdf(z, a, b) / 100.0
@@ -53,7 +68,7 @@ def scaled_beta_pdf(x_0_100: float, a: float, b: float) -> float:
 def get_categorical_likelihood(
     signal: str, state_value: int, likelihood_df: pd.DataFrame
 ) -> Tuple[float, float]:
-    """Fetch likelihoods for a categorical signal state."""
+    """Return P(signal=state_value|R=1), P(signal=state_value|R=0)."""
     required_cols = {
         "signal",
         "state_value",
@@ -69,12 +84,13 @@ def get_categorical_likelihood(
         & (likelihood_df["state_value"] == state_value)
     ]
     if match.empty:
-        raise ValueError(f"No likelihood row for signal={signal}, state_value={state_value}")
+        raise ValueError(
+            f"Missing likelihood for signal-state pair: signal='{signal}', state_value={state_value}"
+        )
 
     row = match.iloc[0]
     l_r1 = float(row["likelihood_given_disruption"])
     l_r0 = float(row["likelihood_given_no_disruption"])
-
     if l_r1 < 0 or l_r0 < 0:
         raise ValueError("Likelihood values must be non-negative.")
     return l_r1, l_r0
@@ -90,12 +106,11 @@ def bayesian_posterior(prior: float, likelihood_R1: float, likelihood_R0: float)
     denom = prior * likelihood_R1 + (1 - prior) * likelihood_R0
     if denom <= 0:
         raise ValueError("Posterior denominator must be positive.")
-
     return (prior * likelihood_R1) / denom
 
 
 def decision_threshold(action_cost: float, disruption_loss: float, action_effectiveness: float) -> float:
-    """Threshold tau = C_A / (e * C_D)."""
+    """Return threshold tau = C_A / (e * C_D)."""
     denom = action_effectiveness * disruption_loss
     if denom <= 0:
         raise ValueError("action_effectiveness * disruption_loss must be positive.")
@@ -108,10 +123,10 @@ def expected_loss_act(
     disruption_loss: float,
     action_effectiveness: float,
 ) -> float:
-    """Expected loss if taking resilience action."""
+    """Return expected loss when taking resilience action."""
     return action_cost + p * (1 - action_effectiveness) * disruption_loss
 
 
 def expected_loss_no_act(p: float, disruption_loss: float) -> float:
-    """Expected loss if not taking resilience action."""
+    """Return expected loss when not taking resilience action."""
     return p * disruption_loss
