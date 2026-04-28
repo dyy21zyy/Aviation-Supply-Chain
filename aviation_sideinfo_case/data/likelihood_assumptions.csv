@@ -1,0 +1,6 @@
+signal,state_value,likelihood_given_disruption,likelihood_given_no_disruption,explanation
+S1_industrial_action,0,0.10,0.80,No warning/action signal is uncommon under disruption.
+S1_industrial_action,1,0.30,0.17,Warning/tension can occur in both states.
+S1_industrial_action,2,0.60,0.03,Confirmed industrial action is much more likely under disruption.
+S3_logistics_advisory,0,0.35,0.92,No advisory is more likely when disruption is absent.
+S3_logistics_advisory,1,0.65,0.08,Advisory is more likely when disruption is present.

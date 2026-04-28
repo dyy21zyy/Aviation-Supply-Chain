@@ -1,0 +1,5 @@
+event_day,date_label,public_information,S1_industrial_action,S2_congestion_index,S3_logistics_advisory,disruption_state
+-3,early_warning,"Early public indication of work-to-rule or industrial-action risk among harbour pilots.",1,35,0,0
+0,disruption_reported,"Industrial action materially disrupts port operations; reported vessel handling falls below normal level.",2,75,0,1
+1,carrier_advisory,"Carrier or logistics advisory reports expected delays or operational disruption.",2,82,1,1
+7,backlog_persistent,"Backlog remains elevated; public reports indicate many vessels waiting and reduced operating capacity.",2,95,1,1
