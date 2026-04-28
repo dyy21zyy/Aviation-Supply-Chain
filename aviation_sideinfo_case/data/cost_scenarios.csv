@@ -1,0 +1,6 @@
+scenario,action_cost,disruption_loss,action_effectiveness,explanation
+base,200000,5000000,0.70,Baseline cost-sensitive decision scenario.
+high_action_cost,500000,5000000,0.70,Action is more expensive than in base scenario.
+low_effectiveness,200000,5000000,0.30,Resilience action prevents a smaller share of disruption loss.
+low_disruption_loss,200000,1000000,0.70,Disruption consequence is smaller than in base scenario.
+severe_disruption_loss,200000,10000000,0.70,Disruption consequence is more severe than in base scenario.
